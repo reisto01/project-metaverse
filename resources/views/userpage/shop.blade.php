@@ -15,8 +15,7 @@
             <div class="col mt-4">
               
                 <form action="/shop" method="GET" class="input-group mb-3">
-                @csrf
-                <input type="text" class="form-control" placeholder="Search popular Land's or Property's..." name="search_me" aria-label="Recipient's username" aria-describedby="button-addon2">
+                <input type="text" class="form-control" placeholder="Search popular Land's or Property's..." name="search_me" value="{{ $search }}" aria-label="Search marketplace" aria-describedby="button-addon2">
                 <button class="btn bg-gradient-primary btn-primary mb-0" type="submit" id="button-search">Search</button>
                 </form>
                 
@@ -26,6 +25,12 @@
         </div>
         <div class="card-body">
           <div class="row mb-2 mx-2">
+            @if ($land->isEmpty() && $properties->isEmpty())
+              <div class="col-12 py-5 text-center text-muted">
+                <h5>No marketplace listings found</h5>
+                <p class="mb-0">Try a different search or add a listing from the admin dashboard.</p>
+              </div>
+            @endif
             <!-- Col Card Item -->
             @foreach ($land as $item)
             <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4 my-sm-3">
@@ -39,7 +44,7 @@
     
                 <div class="card-body pt-2">
                   <span class="text-gradient text-info text-uppercase text-xs font-weight-bold my-2">SANDBOX</span>
-                  <a href="{{$item->url}}" class="card-title h5 d-block text-darker">
+                  <a href="{{ $item->url }}" rel="noopener noreferrer" class="card-title h5 d-block text-darker">
                     {{$item->title}}
                   </a>
                   <p class="card-description mb-4 text-justify text-sm " style="text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:400px;">
@@ -73,7 +78,7 @@
     
                 <div class="card-body pt-2">
                   <span class="text-gradient text-info text-uppercase text-xs font-weight-bold my-2">SANDBOX</span>
-                  <a href="{{$item->url}}" class="card-title h5 d-block text-darker">
+                  <a href="{{ $item->url }}" rel="noopener noreferrer" class="card-title h5 d-block text-darker">
                     {{$item->title}}
                   </a>
                   <p class="card-description mb-4 text-justify text-sm " style="text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:400px;">

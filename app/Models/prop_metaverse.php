@@ -11,6 +11,10 @@ class prop_metaverse extends Model
     protected $table = 'tb_metaprop';
     protected $primaryKey = 'id';
     protected $guarded = ['id'];
+    protected $casts = [
+        'price' => 'decimal:2',
+        'is_deleted' => 'integer',
+    ];
     // protected $fillable = [
     //     'name',
     //     'email',

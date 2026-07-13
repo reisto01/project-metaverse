@@ -14,17 +14,15 @@
                 @csrf
                 <label>Name</label>
                 <div class="mb-3">
-                  <input type="name" class="form-control" placeholder="Name" aria-label="Name"
-                    aria-describedby="name" name="name">
+                  <input type="text" class="form-control" value="{{ auth()->user()->name }}" aria-label="Name" readonly>
                 </div>
                 <label>Email</label>
                 <div class="mb-3">
-                  <input type="email" class="form-control" placeholder="Email" aria-label="Email"
-                    aria-describedby="email-addon" name="email">
+                  <input type="email" class="form-control" value="{{ auth()->user()->email }}" aria-label="Email" readonly>
                 </div>
                 <label>Message</label>
                 <div class="mb-3">
-                  <textarea class="form-control" id="exampleFormControlTextarea1" placeholder="Additional Message" rows="3" name="message"></textarea>
+                  <textarea class="form-control" id="exampleFormControlTextarea1" placeholder="Additional Message" rows="3" name="message" maxlength="5000" required>{{ old('message') }}</textarea>
                 </div>
                 <div class="text-center">
                     <button type="button" class="btn bg-gradient-primary w-100 mt-4 mb-0" onclick="$('#post_contact').submit()">Send Message</button>

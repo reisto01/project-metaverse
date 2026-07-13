@@ -12,7 +12,8 @@ class user_roles extends Model
     protected $primaryKey = 'id';
     protected $guarded = ['id'];
     
-    public function Post(){
-        return $this->hasMany(user_roles::class);
+    public function users()
+    {
+        return $this->hasMany(User::class, 'role_id');
     }
 }

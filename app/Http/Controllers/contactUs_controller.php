@@ -3,166 +3,117 @@
 namespace App\Http\Controllers;
 
 use App\Mail\contactUs_Mail;
-use App\Mail\SendEmail;
 use App\Models\tb_mail;
-use App\Models\user_reg;
+use Dompdf\Dompdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Dompdf\Dompdf;
 
 class contactUs_controller extends Controller
 {
-    // public function index(){
+    public function index()
+    {
+        return view('userpage.contact_us');
+    }
 
-    //     $details = [
-    //     'title' => 'Mail from websitepercobaan.com',
-    //     'body' => 'Ya Gitu'
-    //     ];
-       
-    //     Mail::to('adityayatma@gmail.com')->send(new contactUs_Mail($details));
-       
-    //     dd("Email sudah terkirim.");
-    
-        
-    //     }
-        
-        public function index()
-        {
-            if (session()->get('username') == "") {
-                return redirect('/login')->with('alert-notif', 'Anda Harus Login Terlebih Dahulu');
-            }
-            return view('userpage.contact_us');
-        }
+    public function faq()
+    {
+        return view('userpage.faq');
+    }
 
-        public function faq()
-        {
-            return view('userpage.faq');
-        }
+    public function profile(Request $request)
+    {
+        return view('userpage.profile', ['user' => $request->user()]);
+    }
 
-        public function profile()
-        {
-            if (session()->get('username') == "") {
-                return redirect('/login')->with('alert-notif', 'Anda Harus Login Terlebih Dahulu');
-            }
-            $data['user'] = user_reg::where([['is_deleted',1],['username',session()->get('username')]])->first();
-           return view('userpage.profile',$data);
-        }
+    public function admin_side(Request $request)
+    {
+        $search = $request->string('search_me')->trim()->toString();
+        $messages = tb_mail::where('is_deleted', 1)
+            ->when($search, fn ($query) => $query->where('username', 'like', '%'.$search.'%'))
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->withQueryString();
 
-        public function profile_post()
-        {
-            $data['user'] = user_reg::where([['is_deleted',1],['role_id',2]])->first();
-           return view('userpage.profile',$data);
-        }
+        return view('adminpage.contactUs', [
+            'Page' => 'Kelola Email',
+            'mail' => $messages,
+            'get_total' => $messages->total(),
+            'page_now' => $messages->currentPage(),
+            'search' => $search,
+            'pagin' => $messages->lastPage(),
+        ]);
+    }
 
-        public function admin_side(Request $request)
-        {
-            $search = $request->search_me;
-            if ($search != null) {
-                $cond = [['is_deleted', 1], ['username', 'LIKE', '%' . $search . '%']];
-            } else {
-                $cond = [['is_deleted', 1]];
-            }
-            $page = 4;
-            $data['Page'] = "Kelola Email";
-            $data['mail'] = tb_mail::where($cond)->paginate($page);
-            $data['get_total'] = tb_mail::where($cond)->count();
-            $data['page_now'] = $request->page;
-            $data['search'] = $request->page;
-            $round = ceil($data['get_total'] / $page);
-            $data['pagin'] = $round;
-            if (Session()->get('username')) {
-                return view("adminpage.contactUs",$data);
-            } else {
-                return redirect("/login");
-            }
-            
-        }
+    public function contactUs_post(Request $request)
+    {
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
 
-        public function contactUs_post(Request $request)
-        {
-            if (session()->get('username') == "") {
-                return redirect('/login')->with('alert-notif', 'Anda Harus Login Terlebih Dahulu');
-            }
-            
-            $name = $request->name;
-            $email = $request->email;
-            $message = $request->message;
-            $get_data = [
-                'username' => $name,
-                'email' => $email,
-                'message' => $message
-            ];
-            tb_mail::create($get_data); if (session()->get('username') == "") {
-                return redirect('/login')->with('alert-notif', 'Anda Harus Login Terlebih Dahulu');
-            };
-            return redirect('/contactUs');
-        }
+        tb_mail::create([
+            'username' => $request->user()->name ?: $request->user()->username,
+            'email' => $request->user()->email,
+            'message' => $data['message'],
+            'status' => 1,
+            'is_deleted' => 1,
+        ]);
 
-        public function delete_contact_us(Request $request)
-        {
-            $id = $request->id_data;
-            // echo($id);
-            tb_mail::where('id', $id)->update(['is_deleted' => 0]);
-            return redirect('contactUs_admin');
-        }
+        return redirect('/contactUs')->with('alert-notif', 'Pesan berhasil dikirim');
+    }
 
-        public function answereMail(Request $request)
-        {
-            if (session()->get('username') == "") {
-                return redirect('/login')->with('alert-notif', 'Anda Harus Login Terlebih Dahulu');
-            }
-            $id =  $request->id;
-            $email = $request->name;
-            $reply = $request->reply;
-            $get_data = [
-                'status' =>  2,
-                'answere' =>  $reply,
-                'updated_at' => date("Y-m-d H:i:s"),
-            ];
-            $data = [
-                "title" => 'Balasan LandMetaverse.com',
-                'body' => $reply
-            ];
-            // echo $email;
-            Mail::to($email)->send(new contactUs_Mail($data));
-            tb_mail::where('id', $id)->update($get_data);
+    public function delete_contact_us(Request $request)
+    {
+        $data = $request->validate(['id_data' => ['required', 'integer', 'exists:tb_mail,id']]);
+        tb_mail::whereKey($data['id_data'])->update(['is_deleted' => 0]);
 
-            return redirect('contactUs_admin');
-        }
+        return redirect('/contactUs_admin');
+    }
 
-        public function getData($id)
-        {
-            $data['data'] = tb_mail::where([['id', $id], ['is_deleted', 1]])->first();
-            return Response()->json($data);
-        }
+    public function answereMail(Request $request)
+    {
+        $data = $request->validate([
+            'id' => ['required', 'integer', 'exists:tb_mail,id'],
+            'reply' => ['required', 'string', 'max:5000'],
+        ]);
 
-        public function contactUs_print(Request $request)
-        {
-                   // $this->laporan_transaksi($request);
-        // mengambil data dari session untuk diprint dalam bentuk dokumen
+        $message = tb_mail::where('is_deleted', 1)->findOrFail($data['id']);
 
-        // $data['gambar'] = $request->input('cavas_here');
-        // $data['jumlah_pengunjung'] = 0;
-        // foreach ($data['transaksi'] as $value) {
-        //     $data['jumlah_pengunjung'] += $value->jumlah_tiket_dewasa + $value->jumlah_tiket_anak;
-        // }
-        $data['mail'] = tb_mail::where('id', $request->id_data1)->get();
-    // print_r($data['jenislaporan']);
-        $view = view("adminpage.laporan.downloadLaporan",$data);
+        Mail::to($message->email)->queue(new contactUs_Mail([
+            'title' => 'Balasan LandMetaverse.com',
+            'body' => $data['reply'],
+        ]));
 
-        // instantiate and use the dompdf class
+        $message->update([
+            'status' => 2,
+            'answere' => $data['reply'],
+        ]);
+
+        return redirect('/contactUs_admin');
+    }
+
+    public function getData(int $id)
+    {
+        $message = tb_mail::where('is_deleted', 1)->findOrFail($id);
+
+        return response()->json([
+            'data' => $message->only(['id', 'username', 'email', 'message', 'status', 'answere']),
+        ]);
+    }
+
+    public function contactUs_print(Request $request)
+    {
+        $data = $request->validate(['id_data1' => ['required', 'integer', 'exists:tb_mail,id']]);
+        $message = tb_mail::where('is_deleted', 1)->findOrFail($data['id_data1']);
+        $html = view('adminpage.laporan.downloadLaporan', ['mail' => collect([$message])])->render();
+
         $dompdf = new Dompdf();
-        $dompdf->loadHtml($view);
-
-        // (Optional) Setup the paper size and orientation
+        $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'landscape');
-
-        // Render the HTML as PDF
         $dompdf->render();
 
-        // Output the generated PDF to Browser
-        $dompdf->stream("Laporan Balas Contact Us");
-        return view("adminpage.laporan.downloadLaporan",$data);
-        // return redirect('/');
-        }
+        return response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="contact-message-report.pdf"',
+        ]);
+    }
 }

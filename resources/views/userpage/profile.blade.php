@@ -3,7 +3,7 @@
     <div class="main-content position-relative bg-gray-100 max-height-vh-100 h-100">
         <div class="container-fluid">
             <div class="page-header min-height-300 border-radius-xl mt-7"
-                style="background-image: url('../assets/img/curved-images/curved0.jpg'); background-position-y: 50%;">
+                style="background-image: url('{{ asset('img/curved-images/curved0.jpg') }}'); background-position-y: 50%;">
                 <span class="mask bg-gradient-primary opacity-6"></span>
             </div>
             <!-- Modal Update -->
@@ -62,15 +62,14 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="exampleFormControlInput1">Picture Profile</label>
-                                    <input type="file" class="form-control" id="name_img" name="name_img" placeholder=""
-                                        required>
+                                    <input type="file" class="form-control" id="name_img" name="name_img" placeholder="">
                                 </div>
                                 <input type="hidden" class="form-control" id="role_register" name="role_register">
                                 <div class="form-group">
                                     <label for="exampleFormControlInput1">Password</label>
                                     <input type="password" class="form-control" id="password_register"
                                         name="password_register"
-                                        placeholder="Left it blank if you won't change your password" required>
+                                        placeholder="Left it blank if you won't change your password">
                                 </div>
 
                             </form>
@@ -89,7 +88,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="col-auto">
                             <div class="avatar avatar-xl position-relative">
-                                <img src="{{ asset($user->picture) }}" alt="profile_image"
+                                <img src="{{ asset($user->picture ?: \App\Models\User::DEFAULT_PICTURE) }}" alt="profile_image"
                                     class="w-100 border-radius-lg shadow-sm">
                             </div>
                         </div>

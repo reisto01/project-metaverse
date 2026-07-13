@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('tb_users_roles', function (Blueprint $table) {
             $table->id();
             $table->string('roles');
-            $table->rememberToken();
             $table->timestamps();
             $table->integer('is_deleted')->default(1);
         });
@@ -34,6 +33,9 @@ return new class extends Migration
      */
     public function down()
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['role_id']);
+        });
         Schema::dropIfExists('tb_users_roles');
     }
 };

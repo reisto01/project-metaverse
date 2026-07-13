@@ -57,7 +57,7 @@
                       <li class="nav-item d-flex align-items-center">
                         <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
                           <i class="fa fa-user me-sm-1" aria-hidden="true"></i>
-                          <span class="d-sm-inline d-none">{{session()->get('username')}}</span>
+                          <span class="d-sm-inline d-none">{{ auth()->user()->username }}</span>
                         </a>
                       </li>
                       

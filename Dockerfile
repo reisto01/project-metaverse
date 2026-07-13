@@ -1,12 +1,4 @@
-FROM node:18-alpine AS frontend
-WORKDIR /app
-COPY package.json webpack.mix.js ./
-RUN npm install
-COPY resources/ resources/
-COPY public/ public/
-RUN npm run dev
-
-FROM php:8.1-fpm
+FROM php:8.3-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -19,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     nginx \
     libpq-dev \
-    && docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd \
+    && docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd dom opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Get latest Composer
@@ -31,11 +23,8 @@ WORKDIR /var/www
 # Copy application files
 COPY . .
 
-# Copy compiled frontend assets
-COPY --from=frontend /app/public /var/www/public
-
 # Install composer dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --no-interaction --prefer-dist --classmap-authoritative
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www \

@@ -26,10 +26,11 @@ return new class extends Migration
             $table->string('gender')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->unsignedBigInteger('role_id');
+            $table->unsignedBigInteger('role_id')->index();
             $table->rememberToken();
             $table->timestamps();
-            $table->integer('is_deleted')->default(1);
+            $table->boolean('is_deleted')->default(true);
+            $table->index(['is_deleted', 'created_at']);
 
 
            

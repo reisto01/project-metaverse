@@ -12,6 +12,8 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const DEFAULT_PICTURE = '/img/team-4.jpg';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -19,8 +21,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
+        'phone_number',
+        'picture',
+        'address',
+        'gender',
+        'role_id',
+        'is_deleted',
     ];
 
     /**
@@ -40,5 +49,12 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'role_id' => 'integer',
+        'is_deleted' => 'integer',
     ];
+
+    public function role()
+    {
+        return $this->belongsTo(user_roles::class, 'role_id');
+    }
 }

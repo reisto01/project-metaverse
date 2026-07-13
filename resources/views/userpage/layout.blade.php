@@ -75,6 +75,7 @@
                                         aria-labelledby="dropdownMenuDocs">
                                         <div class="d-none d-lg-block">
                                             <ul class="list-group">
+                                                @auth
                                                 <li class="nav-item list-group-item border-0 p-0">
                                                     <a class="dropdown-item py-2 ps-3 border-radius-md"
                                                         href="profile">
@@ -116,6 +117,12 @@
                                                         </div>
                                                     </a>
                                                 </li>
+                                                @endauth
+                                                @guest
+                                                <li class="nav-item list-group-item border-0 p-0">
+                                                    <a class="dropdown-item py-2 ps-3 border-radius-md" href="/login">Login</a>
+                                                </li>
+                                                @endguest
                                                 <li class="nav-item list-group-item border-0 p-0">
                                                     <a class="dropdown-item py-2 ps-3 border-radius-md"
                                                         href="faq">
@@ -157,9 +164,11 @@
                                                         </div>
                                                     </a>
                                                 </li>
+                                                @auth
                                                 <li class="nav-item list-group-item border-0 p-0">
-                                                    <a class="dropdown-item py-2 ps-3 border-radius-md"
-                                                        href="logout">
+                                                    <form method="POST" action="{{ route('logout') }}">
+                                                        @csrf
+                                                    <button type="submit" class="dropdown-item py-2 ps-3 border-radius-md border-0 bg-transparent">
                                                         <div class="d-flex">
                                                             <div class="icon h-10 me-3 d-flex mt-1">
                                                                 <svg class="text-secondary" width="16px"
@@ -193,8 +202,10 @@
                                                                     Logout</h6>
                                                             </div>
                                                         </div>
-                                                    </a>
+                                                    </button>
+                                                    </form>
                                                 </li>
+                                                @endauth
                                             </ul>
                                         </div>
                                         <div class="row d-lg-none">

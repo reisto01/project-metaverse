@@ -73,7 +73,6 @@
                                             <input type="password" class="form-control" placeholder="Password"
                                                 aria-label="Password" aria-describedby="password-addon" name="password">
                                         </div>
-                                        <input type="hidden" name="role" value="2">
                                         <div class="form-check form-check-info text-left">
                                             <input class="form-check-input" type="checkbox" value=""
                                                 id="flexCheckDefault" onclick="myFunction()" > <!-- checked> -->

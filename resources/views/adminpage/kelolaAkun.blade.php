@@ -45,9 +45,8 @@
                                         </button>
                                     </div>
                                     <div class="modal-body">
-                                        <form id="createAccount" action="/register" method="POST" enctype="multipart/form-data">
+                                        <form id="createAccount" action="/createAccountAdmin" method="POST">
                                             @csrf
-                                            <input type="hidden" class="form-control" id="role" name="role" value="1"> 
                                             <div class="form-group">
                                                 <label for="exampleFormControlInput1">Name</label>
                                                 <input type="text" class="form-control" id="name"
@@ -118,7 +117,7 @@
                                                 <label for="exampleFormControlInput1">Password</label>
                                                 <input type="password" class="form-control" id="password_register"
                                                     name="password_register"
-                                                    placeholder="Left it blank if you won't change your password" required>
+                                                    placeholder="Left it blank if you won't change your password">
                                             </div>
 
                                         </form>
@@ -243,7 +242,7 @@
                     if ($.isEmptyObject(data.error)) {
                         $('#id').val(id_data);
                         $('#username_register').val(data.data.username);
-                        $('#password_register').val(data.data.password);
+                        $('#password_register').val('');
                         $('#email_register').val(data.data.email);
                         $('#name_register').val(data.data.name);
                         $('#role_register').val(data.data.role_id);

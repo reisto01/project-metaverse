@@ -18,10 +18,11 @@ return new class extends Migration
             $table->string('username');
             $table->string('email');
             $table->longText('message');
+            $table->longText('answere')->nullable();
             $table->integer('status')->default(1);
-            $table->rememberToken();
             $table->timestamps();
-            $table->integer('is_deleted')->default(1);
+            $table->boolean('is_deleted')->default(true);
+            $table->index(['is_deleted', 'created_at']);
         });
     }
 

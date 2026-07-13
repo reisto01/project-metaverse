@@ -143,7 +143,9 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/logout">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                    <button type="submit" class="nav-link border-0 bg-transparent w-100 text-start">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                             <i class="ni ni-user-run text-lg opacity-10" aria-hidden="true"></i>
@@ -163,7 +165,8 @@
                               </svg>-->
                         </div>
                         <span class="nav-link-text ms-1">Log Out</span>
-                    </a>
+                    </button>
+                    </form>
                 </li>
       
                 

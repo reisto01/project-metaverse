@@ -11,6 +11,10 @@ class tb_mail extends Model
     protected $table = 'tb_mail';
     protected $primaryKey = 'id';
     protected $guarded = ['id'];
+    protected $casts = [
+        'status' => 'integer',
+        'is_deleted' => 'integer',
+    ];
     // protected $fillable = [
     //     'name',
     //     'email',

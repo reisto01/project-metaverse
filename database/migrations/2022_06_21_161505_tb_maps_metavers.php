@@ -20,10 +20,10 @@ return new class extends Migration
             $table->longText('description');
             $table->string('url');
             $table->string('image');
-            $table->float('price');
-            $table->rememberToken();
+            $table->decimal('price', 14, 2);
             $table->timestamps();
-            $table->integer('is_deleted')->default(1);
+            $table->boolean('is_deleted')->default(true);
+            $table->index(['is_deleted', 'created_at']);
         });
     }
 

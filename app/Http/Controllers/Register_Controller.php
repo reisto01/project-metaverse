@@ -2,216 +2,214 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\user_reg;
+use App\Models\User;
+use App\Models\user_roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class Register_Controller extends Controller
 {
-    /**
-     * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    var $location = 'userimg';
-
-    public function login_view(Request $request)
+    public function login_view()
     {
-        $data['tittle'] = "Welcome To MetaWorld";
-        return view('authPage.login', $data);
+        return view('authPage.login', ['tittle' => 'Welcome To MetaWorld']);
     }
 
-    public function registered_view(Request $request)
+    public function registered_view()
     {
-        $data['tittle'] = "Welcome To MetaWorld";
-        return view('authPage.register', $data);
+        return view('authPage.register', ['tittle' => 'Welcome To MetaWorld']);
     }
 
     public function login(Request $request)
     {
-        $uname = $request->username_login;
-        $password = $request->password_login;
-        $get_data = user_reg::where('is_deleted', 1)->get();
+        $credentials = $request->validate([
+            'username_login' => ['required', 'string', 'max:255'],
+            'password_login' => ['required', 'string'],
+        ]);
 
-        foreach ($get_data as $key => $value) {
-            if ($value->username == $uname && $value->password == md5($password)) {
-                echo($value->username);
-                echo($value->password);
-                echo($value->role);
-                session(['username' => $value->username]);
-                session(['name' => $value->name]);
-                session(['gambar' => $value->picture]);
-                session(['hak_akses' => $value->role]);
-                if ($value->role_id == 1) {
-                    return redirect('/adminpage');
-                } elseif ($value->role_id == 2) {
-                    return redirect('/');
-                }
-            }
-            
+        $user = User::where('username', $credentials['username_login'])
+            ->where('is_deleted', 1)
+            ->first();
+
+        $passwordMatches = $user && Hash::check($credentials['password_login'], $user->password);
+        $legacyPasswordMatches = $user
+            && preg_match('/^[a-f0-9]{32}$/i', $user->password)
+            && hash_equals(strtolower($user->password), md5($credentials['password_login']));
+
+        if (! $passwordMatches && ! $legacyPasswordMatches) {
+            return back()->withErrors([
+                'username_login' => 'The supplied credentials are invalid.',
+            ])->onlyInput('username_login');
         }
-            // print_r($get_data);
-        return redirect('/login');
+
+        if ($legacyPasswordMatches) {
+            $user->forceFill(['password' => Hash::make($credentials['password_login'])])->save();
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->intended((int) $user->role_id === 1 ? '/adminpage' : '/');
     }
 
     public function registered(Request $request)
     {
+        $data = $request->validate([
+            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'max:255'],
+        ]);
 
-        $uname = $request->username;
-        $password = $request->password;
-        $email = $request->email;
-        $role = $request->role;
-        $name = $request->name;
-        $user = [
-            'username' => $uname,
-            'name' => $name,
-            'password' => md5($password),
-            'email' => $email,
-            'role_id' => $role,
-            'created_at' => date("Y-m-d H:i:s"),
-        ];
-        user_reg::create($user);
-        if ($role == 1) {
-            return redirect('/kelolaAkun')->with('alert-notif', 'Pendaftaran Berhasil');
-        } elseif ($role == 2) {
-            return redirect('/login')->with('alert-notif', 'Pendaftaran Berhasil');
-        }
+        User::create([
+            'username' => $data['username'],
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'picture' => User::DEFAULT_PICTURE,
+            'role_id' => 2,
+            'is_deleted' => 1,
+        ]);
+
+        return redirect('/login')->with('alert-notif', 'Pendaftaran Berhasil');
     }
 
-    public function tambah_akun(Request $request)
+    public function createAccountAdmin(Request $request)
     {
+        $data = $request->validate([
+            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'max:255'],
+        ]);
 
-        $uname = $request->username_register;
-        $password = $request->password_register;
-        $email = $request->email_register;
-        $user = [
-            'username' => $uname,
-            'password' => md5($password),
-            'email' => $email,
+        User::create([
+            'username' => $data['username'],
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'picture' => User::DEFAULT_PICTURE,
             'role_id' => 1,
-            'created_at' => date("Y-m-d H:i:s"),
-        ];
-        user_reg::create($user);
-        return redirect('/login')->with('alert-notif', 'Pendaftaran Berhasil');
+            'is_deleted' => 1,
+        ]);
+
+        return redirect('/kelolaAkun')->with('alert-notif', 'Pendaftaran Berhasil');
     }
 
     public function updateAccountAdmin(Request $request)
     {
-        if (session()->get('username') == "") {
-            return redirect('/login')->with('alert-notif', 'Anda Harus Login Terlebih Dahulu');
-        }
-        $id =  $request->id;
-        $uname = $request->username_register;
-        $password = $request->password_register;
-        $email = $request->email_register;
-        $name = $request->name_register;
-        
-        $user = [
-            'username' => $uname,
-            'email' => $email,
-            'name' => $name,
-            'updated_at' => date("Y-m-d H:i:s"),
-        ];
-        if ($password != null) {
-            $user = array_merge($user, ['password' => md5($password)]);
+        $user = User::where('is_deleted', 1)->findOrFail($request->integer('id'));
+
+        $data = $request->validate([
+            'username_register' => ['required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
+            'email_register' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'name_register' => ['required', 'string', 'max:255'],
+            'password_register' => ['nullable', 'string', 'min:8', 'max:255'],
+            'role_register' => ['nullable', Rule::in([1, 2])],
+        ]);
+
+        $user->fill([
+            'username' => $data['username_register'],
+            'email' => $data['email_register'],
+            'name' => $data['name_register'],
+        ]);
+
+        if (isset($data['role_register'])) {
+            $user->role_id = $data['role_register'];
         }
 
-        user_reg::where('id', $id)->update($user);
-        $is_account = user_reg::where('username', session()->get('username'))->value('role_id');
-        if ($is_account == null) {
-            $request->session()->flush();
-            return redirect('/login')->with('alert-notif', 'Perubahan Akun Berhasil, Anda Harus Login terlebih dahulu');
-        } else {
-            return redirect('/kelolaAkun')->with('alert-notif', 'Perubahan Akun Berhasil');
+        if (! empty($data['password_register'])) {
+            $user->password = Hash::make($data['password_register']);
         }
+
+        $user->save();
+
+        return redirect('/kelolaAkun')->with('alert-notif', 'Perubahan Akun Berhasil');
     }
-
 
     public function updateAccountUser(Request $request)
     {
-        $location = 'userimg';
-        if (session()->get('username') == "") {
-            return redirect('/login')->with('alert-notif', 'Anda Harus Login Terlebih Dahulu');
-        }
-        $id =  $request->id;
-        $uname = $request->username_register;
-        $password = $request->password_register;
-        $email = $request->email_register;
-        $name = $request->name_register;
-        $phone_number = $request->phone_register;
-        $address = $request->address_register;
-        $gender = $request->gender_register;
-        $user = [
-            'username' => $uname,
-            'email' => $email,
-            'name' => $name,
-            'phone_number' => $phone_number,
-            'address' => $address,
-            'gender' => $gender,
-            'updated_at' => date("Y-m-d H:i:s"),
-        ];
-        if ($password != null) {
-            $user = array_merge($user, ['password' => md5($password)]);
-        }
-        try {
-            $name_img =  $request->file('name_img')->getClientOriginalName();
-        } catch (\Throwable $th) {
-            $name_img = "";
-        }
-        if (!empty($name_img)) {
-            $img_loc = "/storage/image/" . $this->location . "/";
-            $img_save = "/public/image/" . $this->location . "/";
+        $user = $request->user();
+        $data = $request->validate([
+            'username_register' => ['required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
+            'email_register' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'name_register' => ['required', 'string', 'max:255'],
+            'phone_register' => ['nullable', 'string', 'max:30', Rule::unique('users', 'phone_number')->ignore($user->id)],
+            'address_register' => ['nullable', 'string', 'max:1000'],
+            'gender_register' => ['nullable', Rule::in(['Gentlemen', 'Ladies'])],
+            'password_register' => ['nullable', 'string', 'min:8', 'max:255'],
+            'name_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
 
-            $request->file('name_img')->storeAs($img_save, $name_img);
-            $user = array_merge($user, array('picture' =>  $img_loc . $name_img));
+        $user->fill([
+            'username' => $data['username_register'],
+            'email' => $data['email_register'],
+            'name' => $data['name_register'],
+            'phone_number' => $data['phone_register'] ?? null,
+            'address' => $data['address_register'] ?? null,
+            'gender' => $data['gender_register'] ?? null,
+        ]);
+
+        if (! empty($data['password_register'])) {
+            $user->password = Hash::make($data['password_register']);
         }
-        user_reg::where('id', $id)->update($user);
-        $is_account = user_reg::where('username', session()->get('username'))->value('role_id');
-        if ($is_account == null) {
-            $request->session()->flush();
-            return redirect('/login')->with('alert-notif', 'Perubahan Akun Berhasil, Anda Harus Login terlebih dahulu');
-        } else {
-            return redirect('/profile')->with('alert-notif', 'Perubahan Akun Berhasil');
+
+        if ($request->hasFile('name_img')) {
+            $path = $request->file('name_img')->store('image/userimg', 'public');
+            $user->picture = '/storage/'.$path;
         }
+
+        $user->save();
+
+        return redirect('/profile')->with('alert-notif', 'Perubahan Akun Berhasil');
     }
 
-    public function getData($id)
+    public function getData(int $id)
     {
-        $data['data'] = user_reg::where([['is_deleted', 1], ['id', $id]])->first();
-        return Response()->json($data);
+        $user = User::where('is_deleted', 1)->findOrFail($id);
+
+        return response()->json([
+            'data' => $user->only(['id', 'username', 'email', 'name', 'role_id']),
+        ]);
     }
 
     public function logout(Request $request)
     {
-        $request->session()->flush();
-        return Redirect('/login');
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login');
     }
 
     public function delete_account(Request $request)
     {
-        $id = $request->id_data;
-        // echo($id);
-        user_reg::where('id', $id)->update(['is_deleted' => 0]);
-        return Redirect('/kelolaAkun');
+        $data = $request->validate(['id_data' => ['required', 'integer', 'exists:users,id']]);
+        abort_if((int) $data['id_data'] === (int) $request->user()->id, 422, 'You cannot delete your own account.');
+
+        User::whereKey($data['id_data'])->update(['is_deleted' => 0]);
+
+        return redirect('/kelolaAkun');
     }
 
     public function kelola_akun(Request $request)
     {
-        $search = $request->search_me;
-        if ($search != null) {
-            $cond = [['is_deleted', 1], ['name', 'LIKE', '%' . $search . '%']];
-        } else {
-            $cond = [['is_deleted', 1]];
-        }
-        $page = 4;
-        $data['Page'] = "Kelola Akun";
-        $data['user'] = user_reg::where($cond)->paginate($page);
-        $data['get_total'] = user_reg::where($cond)->count();
-        $data['page_now'] = $request->page;
-        $data['search'] = $request->page;
-        $round = ceil($data['get_total'] / $page);
-        $data['pagin'] = $round;
-        return view('adminpage.kelolaAkun', $data);
+        $search = $request->string('search_me')->trim()->toString();
+        $users = User::where('is_deleted', 1)
+            ->when($search, fn ($query) => $query->where('name', 'like', '%'.$search.'%'))
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('adminpage.kelolaAkun', [
+            'Page' => 'Kelola Akun',
+            'user' => $users,
+            'get_total' => $users->total(),
+            'page_now' => $users->currentPage(),
+            'search' => $search,
+            'pagin' => $users->lastPage(),
+            'roles' => user_roles::where('is_deleted', 1)->get(),
+        ]);
     }
 }
